@@ -1,0 +1,32 @@
+# {{ ansible_managed }}
+location:
+    source_directories:
+        - /mnt/source
+    repositories:
+{% for repository in borgmatic_repositories %}
+        - {{ repository }}
+{% endfor %}
+    exclude_patterns:
+        - '/mnt/source/postfix/public/'
+        - '/mnt/source/postfix/private/'
+        - '/mnt/source/rspamd/rspamd.sock'
+
+storage:
+    retries: 3
+
+retention:
+    keep_hourly: 24
+    keep_daily: 7
+    keep_weekly: 4
+    keep_monthly: 6
+    prefix: ""
+
+hooks:
+    mysql_databases:
+        - name: {{ mailcow_conf['content'] | b64decode | regex_search('DBNAME=(.+)', '\\1') | first }}
+          username: {{ mailcow_conf['content'] | b64decode | regex_search('DBUSER=(.+)', '\\1') | first }}
+          password: {{ mailcow_conf['content'] | b64decode | regex_search('DBPASS=(.+)', '\\1') | first }}
+          options: --default-character-set=utf8mb4
+{% if borgmatic_healtchecks_url is defined %}
+    healthchecks: {{ borgmatic_healtchecks_url }}
+{% endif %}

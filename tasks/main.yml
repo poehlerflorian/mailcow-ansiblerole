@@ -48,6 +48,10 @@
   become: yes
   import_tasks: nginx.yml
 
+- name: Template docker-compose.override.yml
+  become: yes
+  import_tasks: docker_compose_override.yml
+
 - name: Copy vars.local.inc.php
   become: yes
   template:

@@ -1,0 +1,52 @@
+---
+
+- name: Get mailcow.conf
+  ansible.builtin.slurp:
+    src: "{{ mailcow__install_path }}/mailcow.conf"
+  register: mailcow_conf
+
+- name: Copy docker-compose.override.yml
+  template:
+    src: docker-compose.override.yml.j2
+    dest: "{{ mailcow__install_path }}/docker-compose.override.yml"
+  when: mailcow__ipv6_address or portainer_setup
+  notify: Recreate mailcow
+
+- name: Create borgmatic directories
+  file:
+    path: "{{ mailcow__install_path }}/data/conf/borgmatic/{{ item }}"
+    state: directory
+    recurse: yes
+  with_items:
+  - "etc"
+  - "ssh"
+  when: borgmatic_borg_passphrase is defined and borgmatic_repositories is defined
+
+- name: Create borgmatic config
+  template:
+    src: borgmatic_config.yaml.j2
+    dest: "{{ mailcow__install_path }}/data/conf/borgmatic/etc/config.yaml"
+  when: borgmatic_borg_passphrase is defined and borgmatic_repositories is defined
+  notify: Recreate mailcow
+
+- name: Create borgmatic crontab file
+  copy:
+    dest: "{{ mailcow__install_path }}/data/conf/borgmatic/etc/crontab.txt"
+    content: '0 * * * * PATH=$PATH:/usr/bin /usr/bin/borgmatic --stats -v 0 2>&1'
+  when: borgmatic_borg_passphrase is defined and borgmatic_repositories is defined
+
+- name: Copy borgmatic ssh key
+  copy:
+    src: "./ssh/id_ed25519_mail2_borgmatic"
+    dest: "{{ mailcow__install_path }}/data/conf/borgmatic/ssh/id_ed25519"
+    mode: "600"
+  when: borgmatic_borg_passphrase is defined and borgmatic_repositories is defined
+
+- name: Initialize borgmatic repo
+  expect:
+    command: docker-compose exec borgmatic-mailcow borgmatic init --encryption repokey-blake2
+    chdir: "{{ mailcow__install_path }}"
+    responses:
+      'Are you sure you want to continue connecting (yes/no/[fingerprint])?': 'yes'
+  register: command_result
+  changed_when: command_result.stdout | length > 0 and command_result.stdout != "\u001b[0m"

@@ -1,0 +1,16 @@
+  portainer_agent:
+    image: portainer/agent
+    restart: always
+    environment:
+      - EDGE=1
+      - EDGE_ID={{ portainer_edge_id }}
+      - EDGE_KEY={{ portainer_edge_key }}
+      - EDGE_INSECURE_POLL={{ portainer_edge_insecure_poll }}
+{% if portainer_agent_secret is defined %}
+      - AGENT_SECRET={{ portainer_agent_secret }}
+{% endif %}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+      - /:/host
+      - portainer_agent_data:/data

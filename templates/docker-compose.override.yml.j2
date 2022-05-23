@@ -1,0 +1,32 @@
+# {{ ansible_managed }}
+{% if mailcow__ipv6_address is defined
+or ((portainer_agent_secret is defined) and (portainer_edge_id is defined) and (portainer_edge_key is defined))
+or ((borgmatic_borg_passphrase is defined) and (borgmatic_repositories is defined)) %}
+version: '2.1'
+services:
+{% endif %}
+
+{% if mailcow__ipv6_address is defined %}
+{% include "docker-compose.overrides/nginx.j2" ignore missing %}
+{% endif %}
+
+{% if (portainer_agent_secret is defined) and (portainer_edge_id is defined) and (portainer_edge_key is defined) %}
+{% include "docker-compose.overrides/portainer_edge_agent.j2" ignore missing %}
+{% endif %}
+
+{% if (borgmatic_borg_passphrase is defined) and (borgmatic_repositories is defined) %}
+{% include "docker-compose.overrides/borgmatic.j2" ignore missing %}
+{% endif %}
+
+{% if ((portainer_agent_secret is defined) and (portainer_edge_id is defined) and (portainer_edge_key is defined))
+or ((borgmatic_borg_passphrase is defined) and (borgmatic_repositories is defined)) %}
+volumes:
+{% endif %}
+
+{% if (portainer_agent_secret is defined) and (portainer_edge_id is defined) and (portainer_edge_key is defined) %}
+{% include "docker-compose.overrides/portainer_edge_agent_volumes.j2" ignore missing %}
+{% endif %}
+
+{% if (borgmatic_borg_passphrase is defined) and (borgmatic_repositories is defined) %}
+{% include "docker-compose.overrides/borgmatic_volumes.j2" ignore missing %}
+{% endif %}
