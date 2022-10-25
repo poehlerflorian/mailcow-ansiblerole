@@ -32,7 +32,7 @@
 - name: Create borgmatic crontab file
   copy:
     dest: "{{ mailcow__install_path }}/data/conf/borgmatic/etc/crontab.txt"
-    content: '0 * * * * PATH=$PATH:/usr/bin /usr/bin/borgmatic --stats -v 0 2>&1'
+    content: '0 * * * * PATH=$PATH:/usr/local/bin /usr/local/bin/borgmatic --stats -v 0 2>&1'
   when: borgmatic_borg_passphrase is defined and borgmatic_repositories is defined
 
 - name: Copy borgmatic ssh key
